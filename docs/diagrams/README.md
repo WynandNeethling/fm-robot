@@ -55,17 +55,20 @@ Every component is a stacked block built as a `grid-rows` container:
 
 ## Diagrams
 
-The robot layer is three stacked concerns — description, control, hardware. Each
-diagram views one.
+The robot layer is two stacked concerns — description and control — over one
+hardware abstraction. Each diagram views one slice, narrowing from model to
+hardware.
 
 ```
-view_robot   robot state publishing — joint_state_publisher → robot_state_publisher → /tf · /robot_description
-controllers  ros2_control graph — controller_manager loads robot_controller + joint_state_broadcaster
-hardware     sim_backend → {mock · mujoco · gazebo · isaac · real} → one ros2_control system interface
+robot_state_publisher  where /robot_description comes from — URDF/xacro → xacro → robot_state_publisher
+view_robot             robot state publishing — joint_state_publisher → robot_state_publisher → /tf · /robot_description
+control_robot          simulation — /robot_description + /cmd_vel → Sim control plugin → /joint_states · /tf
+control                ros2_control graph — controller_manager ↔ resource_manager → hardware interfaces
+hardware               sim_backend → {mock · mujoco · gazebo · isaac · real} → one ros2_control system interface
 ```
 
 `hardware` is the architectural crux: everything above the `ros2_control` system
-interface is identical across every backend. See
-[ARCHITECTURE.md](../ARCHITECTURE.md). The backend plugins themselves live in
-[`fm-sim`](https://github.com/first-motive/fm-sim); this diagram shows the
-interface they bind to.
+interface is identical across every backend, and the dashed `hardware` block in
+`control` expands into it. See [ARCHITECTURE.md](../ARCHITECTURE.md). The backend
+plugins themselves live in [`fm-sim`](https://github.com/first-motive/fm-sim);
+this diagram shows the interface they bind to.

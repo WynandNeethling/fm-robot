@@ -26,6 +26,14 @@ orchestrate both, but neither package here depends upward.
 
 ## Robot State
 
+The robot model is authored as split-up URDF/xacro source files — links, joints,
+and geometries. `xacro` processes them into one URDF document; `robot_state_publisher`
+loads it and publishes the `/robot_description` topic.
+
+![robot_state_publisher](diagrams/robot_state_publisher.svg)
+
+Source: [`diagrams/robot_state_publisher.d2`](diagrams/robot_state_publisher.d2).
+
 `fm_description/view_robot.launch.py` publishes robot state only:
 `joint_state_publisher` turns panel commands into joint states;
 `robot_state_publisher` turns those into TF + the URDF. A viz client subscribes
@@ -33,9 +41,7 @@ these topics, launched separately — not here.
 
 ![view_robot](diagrams/view_robot.svg)
 
-The model source feeds in from the top: a URDF source file is expanded by `xacro`
-into the robot description the node publishes. Links, joints, and geometries live
-there. Source: [`diagrams/view_robot.d2`](diagrams/view_robot.d2).
+Source: [`diagrams/view_robot.d2`](diagrams/view_robot.d2).
 
 | Topic | Type | Direction |
 |-------|------|-----------|
@@ -46,16 +52,28 @@ there. Source: [`diagrams/view_robot.d2`](diagrams/view_robot.d2).
 
 ## Control
 
-`fm_control` brings up the `ros2_control` graph. Controllers run inside the
-`controller_manager` as loaded plugins: the robot controller subscribes a command;
-`joint_state_broadcaster` publishes `/joint_states`. `robot_state_publisher`
-subscribes `/joint_states` and publishes `/robot_description` + TF.
+`fm_control` brings up the `ros2_control` graph. ROS2 Control is two managers:
+`controller_manager` loads the controllers — the robot controller subscribes a
+command, `joint_state_broadcaster` publishes `/joint_states` — and
+`resource_manager` owns the hardware interfaces. `robot_state_publisher` turns
+`/joint_states` into `/robot_description`; the hardware interfaces bind to the
+actual hardware, sim or real, expanded in the hardware diagram below.
 
-![controllers](diagrams/controllers.svg)
+![control](diagrams/control.svg)
 
-The `controller_manager` receives the description as a launch parameter, so there
-is no `/robot_description` topic edge into it. Source:
-[`diagrams/controllers.d2`](diagrams/controllers.d2).
+Source: [`diagrams/control.d2`](diagrams/control.d2).
+
+### Simulation
+
+In simulation the joint states come from the sim, not a panel. The sim loads
+`/robot_description` and runs a control plugin: it writes joint references into
+the sim robot, reads the actual state back (the closed loop), drives from
+`/cmd_vel`, publishes the resulting `/joint_states`, and emits the
+odom → base_link transform on `/tf`.
+
+![control_robot](diagrams/control_robot.svg)
+
+Source: [`diagrams/control_robot.d2`](diagrams/control_robot.d2).
 
 ## Hardware Abstraction Layer
 
