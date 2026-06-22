@@ -1,0 +1,34 @@
+# Driving the robot in simulation. Same right-hand half as view_robot — /joint_states
+# feeds robot_state_publisher, which publishes TF and the URDF — but the joint states
+# now come from the sim, not a panel. The sim loads /robot_description and runs a
+# control plugin: it writes joint references into the sim robot and reads the actual
+# state back (the closed loop), drives from /cmd_vel, publishes the resulting
+# /joint_states, and emits the odom -> base_link transform on /tf. Nodes plum, topics
+# cream pills, the sim a container holding its two nodes.
+...@styles
+direction: right
+
+cmd: /cmd_vel { class: topic }
+rd: /robot_description { class: topic }
+js: /joint_states { class: topic }
+tf: /tf { class: topic }
+tfs: /tf_static { class: topic }
+
+rsp: robot_state_publisher { class: node }
+
+sim: "Sim (mock · Gazebo)" {
+  class: block
+  cp: Control Plugin { class: node }
+  robot: Sim Robot { class: node }
+  cp -> robot: reference
+  robot -> cp: actual
+}
+
+rd -> sim.cp
+cmd -> sim.cp
+sim.cp -> js
+sim.cp -> tf: odom -> base_link
+js -> rsp
+rsp -> tf
+rsp -> tfs
+rsp -> rd
