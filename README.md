@@ -38,9 +38,10 @@ Three concerns stack one on the next: `fm_description` is the foundation,
 control stack drive a mock, three simulators, or real hardware behind one
 `ros2_control` interface.
 
-![hardware](docs/diagrams/hardware.svg)
+![packages](docs/diagrams/packages.svg)
 
-Full diagrams and the design contract: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+System overview and the design contract: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+Per-layer detail and diagrams live in each package's README.
 
 ## Governance
 

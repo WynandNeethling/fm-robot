@@ -4,9 +4,25 @@ Robot description: URDF, xacro, and meshes. Feeds robot state / URDF to the grap
 
 ## Role
 
-```
-fm_description -> robot_state_publisher -> /tf, /robot_description
-```
+`fm_description` owns the robot model and publishes robot state. The model is
+authored as split-up URDF/xacro files — links, joints, geometries. `xacro`
+processes them into one URDF that `robot_state_publisher` loads and publishes as
+`/robot_description`.
+
+![robot_state_publisher](doc/diagrams/robot_state_publisher.svg)
+
+`view_robot.launch.py` publishes robot state only: `joint_state_publisher` turns
+panel commands into joint states; `robot_state_publisher` turns those into TF and
+the URDF. A viz client (RViz or Foxglove) subscribes these topics.
+
+![view_robot](doc/diagrams/view_robot.svg)
+
+| Topic | Type | Direction |
+|-------|------|-----------|
+| `/joint_command` | `sensor_msgs/JointState` | panel → joint_state_publisher |
+| `/joint_states` | `sensor_msgs/JointState` | joint_state_publisher → robot_state_publisher |
+| `/tf`, `/tf_static` | `geometry_msgs/TransformStamped` | robot_state_publisher → viz |
+| `/robot_description` | URDF (XML) | robot_state_publisher → viz |
 
 ## Layout
 
@@ -60,6 +76,12 @@ or underscore (`g1-d` == `g1_d`); any extra args pass straight through to
 `ros2 launch`.
 
 ### Robots
+
+The registry abstracts three robots — each entry defines its description source,
+variants, and mesh strategy; the viewer and launchers select by `robot:=` and
+`variant:=`.
+
+![registry](doc/diagrams/registry.svg)
 
 | `--robot` | `--variant` (default first) | Source | Mesh rewrite |
 |-----------|------------------------------|--------|--------------|

@@ -14,6 +14,22 @@ own `<ros2_control>` system, so the controllers and interfaces never change — 
 fm_bringup launches -> controllers -> ros2_control system (plugin per backend) -> sim or hardware
 ```
 
+## Control Graph
+
+ROS2 Control is two managers: `controller_manager` loads the controllers — the
+robot controller subscribes the command, `joint_state_broadcaster` publishes
+`/joint_states` — and `resource_manager` owns the hardware interfaces.
+`robot_state_publisher` turns `/joint_states` into `/robot_description`.
+
+![control](doc/diagrams/control.svg)
+
+In simulation the joint states come from the sim, not a panel. The sim loads
+`/robot_description` and runs a control plugin: it writes joint references into the
+sim robot, reads the actual state back (the closed loop), drives from `/cmd_vel`,
+publishes `/joint_states`, and emits the odom → base_link transform on `/tf`.
+
+![control_robot](doc/diagrams/control_robot.svg)
+
 ## Layout
 
 ```
@@ -31,6 +47,13 @@ test/                     gtest for the bridge logic
 
 ## Backend → System Plugin
 
+`sim_backend` selects one `<hardware>` plugin; everything above the
+`ros2_control` system interface is identical across backends. The five plugins
+all implement the same interface — the dashed block expands the real-hardware
+case below.
+
+![hardware](doc/diagrams/hardware.svg)
+
 ```
 sim_backend   openarm                     so101                            g1_d
   mock          mock_components/GenericSystem (all robots)
@@ -44,6 +67,12 @@ The sim backends are identical across robots: only the geometry + joint set diff
 The `real` backend is where the robots diverge — see the G1-D asymmetry below.
 
 ## How It Is Built
+
+A per-robot `{robot}.sim.urdf.xacro` includes the geometry and the
+`{robot}.ros2_control.xacro`; that second file holds the `<hardware>` block the
+`sim_backend` argument resolves.
+
+![xacro](doc/diagrams/xacro.svg)
 
 The launches process the xacro per robot + backend, e.g.:
 
